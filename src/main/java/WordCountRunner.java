@@ -1,10 +1,13 @@
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+import java.io.IOException;
 
 /**
  * 用来描述一个作业job（使用哪个mapper类，哪个reducer类，输入文件在哪，输出结果放哪。。。。） 
@@ -21,6 +24,9 @@ public class WordCountRunner {
         Job wcjob = Job.getInstance(conf);
         //设置job所使用的jar包,使用Configuration对象调用set()方法，设置mapreduce.job.jar wcount.jar  
         conf.set("mapreduce.job.jar", "wcount.jar");
+
+        //删除存在的output目录
+        deleteDir(conf,"hdfs://Master:9000/output");
 
         //设置wcjob中的资源所在的jar包    
         //调用job对象的setJarByClass()方法，参数是WordCountRunner.class,设置job作业中的资源所在的jar包  
@@ -45,12 +51,33 @@ public class WordCountRunner {
         //指定要处理的原始数据所存放的路径  
         //调用FileInputFormat对象的setInputPath()方法，参数的文件路径，是设置的源数据路径，当此处为集群的路径是就是跑在集群上的程序，  
         //如果设置在当前机器的路径，就是本地模式  
-        FileInputFormat.setInputPaths(wcjob, "hdfs://Master:9000/user/test1.txt");
+        FileInputFormat.setInputPaths(wcjob, "hdfs://Master:9000/user/test2.txt");
 
         //指定处理之后的结果输出到哪个路径，注意此时应当在路径应当是差不多的  
         FileOutputFormat.setOutputPath(wcjob, new Path("hdfs://Master:9000/output"));
         //调用job对象的waitForCompletion()方法，提交作业。             
         boolean res = wcjob.waitForCompletion(true);
         System.exit(res?0:1);
+    }
+
+    /**
+     * 1
+     * @param conf 2
+     * @param dirPath 3
+     * @throws IOException 4
+     */
+    public static void deleteDir(Configuration conf, String dirPath) throws IOException {
+
+        FileSystem fs = FileSystem.get(conf);
+        Path targetPath = new Path(dirPath);
+        if (fs.exists(targetPath)) {
+            boolean delResult = fs.delete(targetPath, true);
+            if (delResult) {
+                System.out.println(targetPath + " has been deleted sucessfullly.");
+            } else {
+                System.out.println(targetPath + " deletion failed.");
+            }
+        }
+
     }
 }

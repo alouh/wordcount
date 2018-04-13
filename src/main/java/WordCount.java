@@ -1,95 +1,80 @@
-
-import java.io.IOException;
-import java.util.StringTokenizer;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import command.HdfsCommand;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.mapred.*;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
 /**
  * @Author: HanJiafeng
- * @Date: 11:44 2018/3/15
+ * @Date: 10:08 2018/3/26
  * @Desc:
  */
-
 public class WordCount {
 
-    public static class TokenizerMapper
-            extends Mapper<Object, Text, Text, IntWritable> {
+    public static class WordCountMapper extends MapReduceBase implements Mapper<Object,Text,Text,IntWritable>{
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
 
-        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-            StringTokenizer itr = new StringTokenizer(value.toString());
-            while (itr.hasMoreTokens()) {
-                word.set(itr.nextToken());
-                context.write(word, one);
+        @Override
+        public void map(Object o, Text text, OutputCollector<Text, IntWritable> outputCollector, Reporter reporter) throws IOException{
+            StringTokenizer stringTokenizer = new StringTokenizer(text.toString());
+            while (stringTokenizer.hasMoreTokens()){
+                word.set(stringTokenizer.nextToken());
+                outputCollector.collect(word,one);
             }
         }
     }
 
-    public static class IntSumReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+    public static class WordCountReucer extends MapReduceBase implements Reducer<Text,IntWritable,Text,IntWritable>{
+
         private IntWritable result = new IntWritable();
 
-        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+        @Override
+        public void reduce(Text text, Iterator<IntWritable> iterator, OutputCollector<Text, IntWritable> outputCollector, Reporter reporter) throws IOException{
+
             int sum = 0;
-            for (IntWritable val : values) {
-                sum += val.get();
+            while (iterator.hasNext()){
+                sum += iterator.next().get();
             }
             result.set(sum);
-            context.write(key, result);
+            outputCollector.collect(text,result);
         }
     }
 
-    /**
-     * 删除指定目录
-     */
-    private static void deleteDir(Configuration conf, String dirPath) throws IOException {
-        FileSystem fs = FileSystem.get(conf);
-        Path targetPath = new Path(dirPath);
-        if (fs.exists(targetPath)) {
-            boolean delResult = fs.delete(targetPath, true);
-            if (delResult) {
-                System.out.println(targetPath + " has been deleted sucessfullly.");
-            } else {
-                System.out.println(targetPath + " deletion failed.");
-            }
-        }
+    public static void main(String...args)throws Exception{
 
-    }
+        String input = "hdfs://Master:9000/user/test1.txt";
+        //String output = "hdfs://Master:9000/user/output";
 
-    public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
-        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-        if (otherArgs.length < 2) {
-            System.err.println("Usage: wordcount <in> [<in>...] <out>");
-            System.exit(2);
-        }
+        JobConf conf = new JobConf(WordCount.class);
+        conf.setJobName("WordCount");
+        conf.addResource("classpath://core-site.xml");
+        //conf.addResource("classpath://hdfs-site.xml");
+        //conf.addResource("classpath://mapred-site.xml");
 
-        //先删除output目录
-        //deleteDir(conf, otherArgs[otherArgs.length - 1]);
+        HdfsCommand hdfsCommand = new HdfsCommand(input,conf);
+        hdfsCommand.cat("/output/part-r-00000");
 
-        Job job = Job.getInstance(conf, "word count");
-        job.setJarByClass(WordCount.class);
-        job.setMapperClass(TokenizerMapper.class);
-        job.setCombinerClass(IntSumReducer.class);
-        job.setReducerClass(IntSumReducer.class);
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
-        for (int i = 0; i < otherArgs.length - 1; ++i) {
-            FileInputFormat.addInputPath(job, new Path(otherArgs[i]));
-        }
-        FileOutputFormat.setOutputPath(job,
-                new Path(otherArgs[otherArgs.length - 1]));
-        //System.exit(job.waitForCompletion(true) ? 0 : 1);
+        /*conf.setOutputKeyClass(Text.class);
+        conf.setOutputValueClass(IntWritable.class);
+
+        conf.setMapperClass(WordCountMapper.class);
+        conf.setCombinerClass(WordCountReucer.class);
+        conf.setReducerClass(WordCountReucer.class);
+
+        conf.setInputFormat(TextInputFormat.class);
+        conf.setOutputFormat(TextOutputFormat.class);
+
+        FileInputFormat.setInputPaths(conf,new Path(input));
+        FileOutputFormat.setOutputPath(conf,new Path(output));
+
+        WordCountRunner.deleteDir(conf,output);
+
+        JobClient.runJob(conf);
+        System.exit(0);*/
     }
 }

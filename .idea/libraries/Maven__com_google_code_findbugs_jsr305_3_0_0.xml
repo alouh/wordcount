@@ -1,13 +1,15 @@
 <component name="libraryTable">
   <library name="Maven: com.google.code.findbugs:jsr305:3.0.0">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0.jar!/" />
+      <root url="jar://F:/maven/repository/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0-javadoc.jar!/" />
+      <root url="jar://F:/maven/repository/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0-sources.jar!/" />
+      <root url="jar://F:/maven/repository/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0-sources.jar!/" />
+      <root url="file://A:/hadoop-2.9.0/share/hadoop/common/lib" />
     </SOURCES>
+    <jarDirectory url="file://A:/hadoop-2.9.0/share/hadoop/common/lib" recursive="false" type="SOURCES" />
   </library>
 </component>
