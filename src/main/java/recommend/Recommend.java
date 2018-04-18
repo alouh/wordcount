@@ -29,12 +29,16 @@ public class Recommend {
         path.put("Step3Output1", path.get("Step1Input") + "/step3_1");
         path.put("Step3Input2", path.get("Step2Output"));
         path.put("Step3Output2", path.get("Step1Input") + "/step3_2");
+
         path.put("Step4Input1", path.get("Step3Output1"));
         path.put("Step4Input2", path.get("Step3Output2"));
         path.put("Step4Output", path.get("Step1Input") + "/step4");
 
         Step1.run(path);
         Step2.run(path);
+        Step3.run1(path);
+        Step3.run2(path);
+        Step4.run(path);
         System.exit(0);
     }
 

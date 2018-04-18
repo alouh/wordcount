@@ -1,22 +1,12 @@
 package kpi;
 
-import java.io.IOException;
-import java.util.Iterator;
-
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reducer;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.TextInputFormat;
-import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapred.*;
+
+import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * @Author: JF Han
@@ -24,12 +14,12 @@ import org.apache.hadoop.mapred.TextOutputFormat;
  * @Desc:
  */
 public class KpiPv {
-    public static class KPIPVMapper extends MapReduceBase implements Mapper {
+    public static class KPIPVMapper extends MapReduceBase implements Mapper<Object,Object,Text,IntWritable> {
         private IntWritable one = new IntWritable(1);
         private Text word = new Text();
 
         @Override
-        public void map(Object key, Object value, OutputCollector output, Reporter reporter) throws IOException {
+        public void map(Object key, Object value, OutputCollector<Text,IntWritable> output, Reporter reporter) throws IOException {
             Kpi kpi = Kpi.filterPvs(value.toString());
             if (kpi.isValid()) {
                 word.set(kpi.getRequest());
@@ -38,17 +28,18 @@ public class KpiPv {
         }
     }
 
-    public static class KPIPVReducer extends MapReduceBase implements Reducer {
+    public static class KPIPVReducer extends MapReduceBase implements Reducer<Object,Text,Object,IntWritable> {
         private IntWritable result = new IntWritable();
 
         @Override
-        public void reduce(Object key, Iterator values, OutputCollector output, Reporter reporter) throws IOException {
+        public void reduce(Object o, Iterator<Text> iterator, OutputCollector<Object, IntWritable> outputCollector, Reporter reporter) throws IOException{
+            // TODO: 2018/4/18 那个网站上的内容有问题,接口后面没有跟类型,代码不全.url:http://blog.fens.me/hadoop-mapreduce-log-kpi/
             int sum = 10;
-            /*while (values.hasNext()) {
-                sum += values.next();
-            }*/
+            while (iterator.hasNext()) {
+                sum += iterator.next().getLength();
+            }
             result.set(sum);
-            output.collect(key, result);
+            outputCollector.collect(o, result);
         }
     }
 
